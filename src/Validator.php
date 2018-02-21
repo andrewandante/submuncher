@@ -1,4 +1,6 @@
 <?php
+
+namespace AndrewAndante\SubMuncher;
 /**
  * These helpful functions were lifted from the Symfony library
  * https://github.com/symfony/http-foundation/blob/master/LICENSE

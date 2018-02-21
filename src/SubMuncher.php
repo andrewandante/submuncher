@@ -1,5 +1,7 @@
 <?php
 
+namespace AndrewAndante\SubMuncher;
+
 class SubMuncher
 {
     /**

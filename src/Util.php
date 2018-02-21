@@ -1,5 +1,6 @@
 <?php
 
+namespace AndrewAndante\SubMuncher;
 // The bulk of the following code is from /etc/inc/util.inc in pfSense v2.0.2
 // See https://www.pfsense.org - seriously good open source router software
 
