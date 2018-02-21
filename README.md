@@ -2,6 +2,8 @@
 
 Handy tool for consolidating subnets into as few subnets as possible
 
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/andrewandante/submuncher/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/andrewandante/submuncher/?branch=master)
+
 ## Installation
 
 `composer require andrewandante/submuncher`
