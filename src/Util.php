@@ -130,6 +130,7 @@ class Util
         return self::long2ip32(ip2long($ipaddr) | ~self::gen_subnet_mask_long($bits));
     }
 
+    /* takes an array of ip address, sorts and returns as an array */
     public static function sort_addresses($ipaddr)
     {
         $bitAddresses = [];

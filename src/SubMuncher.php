@@ -15,7 +15,7 @@ class SubMuncher
      * @param array $ipsArray
      * @return array
      */
-    public static function consolidate($ipsArray)
+    public static function consolidate($ipsArray, $flex = 0)
     {
         $consolidatedSubnets = [];
         $subnetStart = null;
