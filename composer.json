@@ -13,5 +13,6 @@
       "AndrewAndante\\SubMuncher\\": "src/",
       "AndrewAndante\\SubMuncher\\Test\\": "tests/php"
     }
-  }
+  },
+  "license": "MIT"
 }
