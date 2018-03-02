@@ -10,7 +10,8 @@
   },
   "autoload": {
     "psr-4": {
-      "AndrewAndante\\SubMuncher\\": "src/"
+      "AndrewAndante\\SubMuncher\\": "src/",
+      "AndrewAndante\\SubMuncher\\Test\\": "tests/php"
     }
   }
 }
