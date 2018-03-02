@@ -78,4 +78,25 @@ class UtilTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($orderedIPs, Util::sort_addresses($shuffledIPs));
     }
+
+    public function testSubnetRangeSize()
+    {
+        $this->assertEquals(1, Util::subnet_range_size(32));
+        $this->assertEquals(2, Util::subnet_range_size(31));
+        $this->assertEquals(256, Util::subnet_range_size(24));
+    }
+
+    public function testCidrToIPsArray()
+    {
+        $this->assertEquals(
+            [
+                '10.10.10.0',
+                '10.10.10.1',
+                '10.10.10.2',
+                '10.10.10.3',
+            ],
+            Util::cidr_to_ips_array('10.10.10.0/30')
+        );
+        $this->assertEquals(['10.10.10.0'], Util::cidr_to_ips_array('10.10.10.0'));
+    }
 }

@@ -54,4 +54,51 @@ class SubMuncherTest extends \PHPUnit_Framework_TestCase
             )
         );
     }
+
+    public function testConsolidate()
+    {
+        $this->assertEquals(['10.10.10.0/31'], SubMuncher::consolidate(['10.10.10.0', '10.10.10.1']));
+        $this->assertEquals(
+            ['10.10.10.0/31', '10.10.10.2/32'],
+            SubMuncher::consolidate(['10.10.10.0', '10.10.10.1', '10.10.10.2'])
+        );
+        $this->assertEquals(
+            ['10.10.10.0/31', '10.10.10.2/32', '100.10.10.0/30', '100.10.10.4/31'],
+            SubMuncher::consolidate(
+                [
+                    '10.10.10.0',
+                    '10.10.10.1',
+                    '10.10.10.2',
+                    '100.10.10.0',
+                    '100.10.10.1',
+                    '100.10.10.2',
+                    '100.10.10.3',
+                    '100.10.10.4',
+                    '100.10.10.5'
+                ]
+            )
+        );
+    }
+
+    public function testConsolidateSubnets()
+    {
+        $this->assertEquals(['10.10.10.0/31'], SubMuncher::consolidate_subnets(['10.10.10.0/32', '10.10.10.1/32']));
+        $this->assertEquals(['10.10.10.0/30'], SubMuncher::consolidate_subnets(['10.10.10.0/31', '10.10.10.2/31']));
+        $this->assertEquals(
+            ['10.10.10.0/31', '10.10.10.2/32', '100.10.10.0/30', '100.10.10.4/31'],
+            SubMuncher::consolidate_subnets(
+                [
+                    '10.10.10.0',
+                    '10.10.10.1',
+                    '10.10.10.2',
+                    '100.10.10.0',
+                    '100.10.10.1',
+                    '100.10.10.2',
+                    '100.10.10.3',
+                    '100.10.10.4',
+                    '100.10.10.5'
+                ]
+            )
+        );
+    }
 }

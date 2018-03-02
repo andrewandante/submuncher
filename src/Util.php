@@ -98,6 +98,30 @@ class Util
         return -1;
     }
 
+    public static function subnet_range_size($subnetmask)
+    {
+        return (2 ** (32 - (int) $subnetmask));
+    }
+
+    public static function cidr_to_ips_array($cidr)
+    {
+        $parts = explode('/', $cidr);
+        if (!self::is_ipaddr($parts[0])) {
+            return false;
+        }
+
+        $subnetMask = isset($parts[1]) ? $parts[1] : "32";
+        $ips = [];
+        $currentIP = $parts[0];
+
+        for ($i = 0; $i < self::subnet_range_size($subnetMask); ++$i) {
+            $ips[] = $currentIP;
+            $currentIP = self::ip_after($currentIP);
+        }
+
+        return $ips;
+    }
+
     /* return the subnet address given a host address and a subnet bit count */
     public static function gen_subnet($ipaddr, $bits)
     {
