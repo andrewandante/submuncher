@@ -1,0 +1,10 @@
+<phpunit colors="true" backupGlobals="false" backupStaticAttributes="false" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" processIsolation="false" stopOnError="false" stopOnFailure="false" stopOnIncomplete="false" stopOnSkipped="false" syntaxCheck="true" verbose="true">
+
+    <php>
+        <const name="PHPUNIT_RUNNING" value="true"/>
+    </php>
+
+    <testsuite name="Default">
+        <directory>tests/php</directory>
+    </testsuite>
+</phpunit>

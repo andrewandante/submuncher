@@ -15,7 +15,7 @@ class SubMuncher
      * @param array $ipsArray
      * @return array
      */
-    public static function consolidate($ipsArray)
+    public static function consolidate($ipsArray, $flex = 0)
     {
         $consolidatedSubnets = [];
         $subnetStart = null;
@@ -105,10 +105,10 @@ class SubMuncher
         // NOTE: This may never be hit, the way the above algo turned out, but is left
         // for completeness.
         if ($startip != $targetsub_min) {
-            $rangesubnets =
-                array_merge($rangesubnets,
-                    self::ip_range_to_subnet_array($startip,
-                        Util::ip_before($targetsub_min)));
+            $rangesubnets = array_merge(
+                $rangesubnets,
+                self::ip_range_to_subnet_array($startip, Util::ip_before($targetsub_min))
+            );
         }
 
         // Add in the subnet we found before, to preserve ordering
@@ -117,11 +117,27 @@ class SubMuncher
         // And some more logic that will search after the subnet we found to fill in
         // to the end of the range.
         if ($endip != $targetsub_max) {
-            $rangesubnets =
-                array_merge($rangesubnets,
-                    self::ip_range_to_subnet_array(Util::ip_after($targetsub_max), $endip));
+            $rangesubnets = array_merge(
+                $rangesubnets,
+                self::ip_range_to_subnet_array(Util::ip_after($targetsub_max), $endip)
+            );
         }
 
         return $rangesubnets;
+    }
+
+    /**
+     * Should be an array of CIDRS eg ['1.1.1.0/24', '2.2.2.2/31']
+     *
+     * @param $subnetsArray
+     */
+    public static function consolidate_subnets($subnetsArray)
+    {
+        $ips = [];
+        foreach ($subnetsArray as $subnet) {
+            $ips = array_merge($ips, Util::cidr_to_ips_array($subnet));
+        }
+
+        return self::consolidate($ips);
     }
 }
