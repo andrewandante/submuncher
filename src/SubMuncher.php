@@ -41,7 +41,7 @@ class SubMuncher
                 $subnetStart = null;
             // otherwise we are a lone /32, so add it straight in
             } else {
-                $consolidatedSubnets [] = $ipv4;
+                $consolidatedSubnets [] = $ipv4.'/32';
                 $subnetStart = null;
             }
         }
