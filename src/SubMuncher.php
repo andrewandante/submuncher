@@ -13,37 +13,87 @@ class SubMuncher
 
     /**
      * @param array $ipsArray
+     * @param int $max max number of rules returned
      * @return array
      */
     public static function consolidate($ipsArray, $flex = 0)
     {
         $consolidatedSubnets = [];
         $subnetStart = null;
+        $flexCount = 0;
 
         $ips = array_unique($ipsArray);
         $sortedIPs = Util::sort_addresses($ips);
 
         foreach ($sortedIPs as $index => $ipv4) {
+            // first IP
+            if ($index == 0) {
+                $subnetStart = $ipv4;
+            }
             // last IP
             if (!isset($sortedIPs[$index + 1])) {
                 if ($subnetStart) {
-                    $result = self::ip_range_to_subnet_array($subnetStart, $ipv4);
+//                    var_dump(['flexcount' => $flexCount]);
+                    $lastIP = $flexCount < $flex ? Util::ip_after($ipv4, $flex) : $ipv4;
+//                    var_dump(['subnetStart' => $subnetStart, 'lastIP' => $lastIP]);
+                    $result = self::ip_range_to_subnet_array($subnetStart, $lastIP);
+
+                    $lastRule = end($result);
+                    $parts = explode('/', $lastRule);
+                    $subnetMask = $parts[1];
+                    if (Util::subnet_range_size($subnetMask) <= $flex) {
+                        array_pop($result);
+                    }
+
+//                    var_dump($consolidatedSubnets);
                     $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
+//                    var_dump($consolidatedSubnets);
+                } else {
+                    $consolidatedSubnets[]= $ipv4.'/32';
+                    $subnetStart = null;
+                    $flexCount = 0;
                 }
-            // if the next IP is sequential, we want this as part of the subnet
+                // if the next IP is sequential, we want this as part of the subnet
             } elseif ($sortedIPs[$index + 1] == Util::ip_after($ipv4)) {
                 // if we've already started, just keep going, else kick one off
                 $subnetStart = $subnetStart ?: $ipv4;
-            // if not the first IP and the previous IP is sequential, we're at the end of a subnet
-            } elseif (isset($sortedIPs[$index - 1]) && $ipv4 == Util::ip_after($sortedIPs[$index - 1])) {
-                $result = self::ip_range_to_subnet_array($subnetStart, $ipv4);
-                $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
-                $subnetStart = null;
-            // otherwise we are a lone /32, so add it straight in
+                // if not the first IP and the previous IP is sequential, we're at the end of a subnet
+            } elseif (isset($sortedIPs[$index - 1])) {
+                if ($flexCount < $flex) {
+                    ++$flexCount;
+                } else {
+                    $endIP = $flexCount < $flex ? Util::ip_after($ipv4, $flex) : $ipv4;
+                    $result = self::ip_range_to_subnet_array($subnetStart, $endIP);
+
+                    $lastRule = end($result);
+                    $parts = explode('/', $lastRule);
+                    $subnetMask = $parts[1];
+                    if (Util::subnet_range_size($subnetMask) <= $flex) {
+                        array_pop($result);
+                    }
+
+                    $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
+                    $subnetStart = null;
+                    $flexCount = 0;
+                }
+                // otherwise we are a lone /32, so add it straight in
             } else {
-                $consolidatedSubnets [] = $ipv4.'/32';
-                $subnetStart = null;
+                if ($flexCount < $flex) {
+                    ++$flexCount;
+                } else {
+                    $consolidatedSubnets[]= $ipv4.'/32';
+                    $subnetStart = null;
+                    $flexCount = 0;
+                }
+
             }
+        }
+
+        $lastRule = end($consolidatedSubnets);
+        $parts = explode('/', $lastRule);
+        $subnetMask = $parts[1];
+        if (Util::subnet_range_size($subnetMask) <= $flex) {
+            array_pop($consolidatedSubnets);
         }
 
         return $consolidatedSubnets;
@@ -82,20 +132,23 @@ class SubMuncher
             // tested recursively after the loop.
 
             // Check if the subnet begins with $startip and ends before $endip
-            if (($targetsub_min == $startip) &&
-                Util::ip_less_than($targetsub_max, $endip)) {
+            if (($targetsub_min == $startip)
+                && Util::ip_less_than($targetsub_max, $endip)
+            ) {
                 break;
             }
 
             // Check if the subnet ends at $endip and starts after $startip
-            if (Util::ip_greater_than($targetsub_min, $startip) &&
-                ($targetsub_max == $endip)) {
+            if (Util::ip_greater_than($targetsub_min, $startip)
+                && ($targetsub_max == $endip)
+            ) {
                 break;
             }
 
             // Check if the subnet is between $startip and $endip
-            if (Util::ip_greater_than($targetsub_min, $startip) &&
-                Util::ip_less_than($targetsub_max, $endip)) {
+            if (Util::ip_greater_than($targetsub_min, $startip)
+                && Util::ip_less_than($targetsub_max, $endip)
+            ) {
                 break;
             }
         }
@@ -129,7 +182,7 @@ class SubMuncher
     /**
      * Should be an array of CIDRS eg ['1.1.1.0/24', '2.2.2.2/31']
      *
-     * @param $subnetsArray
+     * @param string[] $subnetsArray
      */
     public static function consolidate_subnets($subnetsArray)
     {
@@ -140,4 +193,16 @@ class SubMuncher
 
         return self::consolidate($ips);
     }
+
+//    public static function consolidateWithFlex($ipsArray, $flex = 0)
+//    {
+//        $ips = array_unique($ipsArray);
+//        $sortedIPs = Util::sort_addresses($ips);
+//        for ($i = 0; $i < $flex; ++$i) {
+//            for ($j = 0; $j < $flex; ++$j) {
+//
+//            }
+//        }
+//
+//    }
 }

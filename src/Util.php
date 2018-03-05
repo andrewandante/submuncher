@@ -1,6 +1,7 @@
 <?php
 
 namespace AndrewAndante\SubMuncher;
+
 // The bulk of the following code is from /etc/inc/util.inc in pfSense v2.0.2
 // See https://www.pfsense.org - seriously good open source router software
 
@@ -62,15 +63,15 @@ class Util
     }
 
     /* Return the next IP address after the given address */
-    public static function ip_after($ip)
+    public static function ip_after($ip, $increment = 1)
     {
-        return self::long2ip32(ip2long($ip) + 1);
+        return self::long2ip32(ip2long($ip) + $increment);
     }
 
     /* Return the next IP address after the given address */
-    public static function ip_before($ip)
+    public static function ip_before($ip, $decrement = 1)
     {
-        return self::long2ip32(ip2long($ip) - 1);
+        return self::long2ip32(ip2long($ip) - $decrement);
     }
 
     /* Find the smallest possible subnet mask which can contain a given number of IPs
@@ -168,7 +169,4 @@ class Util
         }
         return $ipAddresses;
     }
-
-
-
 }

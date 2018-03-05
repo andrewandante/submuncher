@@ -9,6 +9,11 @@ build:
     # Overwrites inferred commands
     override:
       - "composer install --no-interaction --ignore-platform-reqs --no-progress"
+  tests:
+    before:
+      - "vendor/bin/phpcs src/"
+      - "vendor/bin/phpcs tests/"
+      - "vendor/bin/phpunit"
 
 checks:
   php: true

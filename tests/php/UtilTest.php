@@ -38,13 +38,17 @@ class UtilTest extends \PHPUnit_Framework_TestCase
     public function testIPAfter()
     {
         $this->assertEquals('10.10.10.1', Util::ip_after('10.10.10.0'));
+        $this->assertEquals('10.10.10.2', Util::ip_after('10.10.10.0', 2));
         $this->assertEquals('10.10.11.0', Util::ip_after('10.10.10.255'));
+        $this->assertEquals('10.10.11.1', Util::ip_after('10.10.10.255', 2));
     }
 
     public function testIPBefore()
     {
         $this->assertEquals('10.10.10.0', Util::ip_before('10.10.10.1'));
+        $this->assertEquals('10.10.10.0', Util::ip_before('10.10.10.2', 2));
         $this->assertEquals('10.10.9.255', Util::ip_before('10.10.10.0'));
+        $this->assertEquals('10.10.9.255', Util::ip_before('10.10.10.1', 2));
     }
 
     public function testFindSmallestCidr()
