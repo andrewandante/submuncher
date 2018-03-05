@@ -1,0 +1,14 @@
+tools:
+  php_sim:
+    min_mass: 30 # Defaults to 16
+
+build:
+  environment:
+    php: 7.1
+  dependencies:
+    # Overwrites inferred commands
+    override:
+      - "composer install --no-interaction --ignore-platform-reqs --no-progress"
+
+checks:
+  php: true
