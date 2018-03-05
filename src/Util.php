@@ -99,6 +99,60 @@ class Util
         return -1;
     }
 
+
+    public static function get_single_subnet($startip, $endip)
+    {
+        if (!Util::is_ipaddr($startip) || !Util::is_ipaddr($endip)) {
+            return array();
+        }
+
+        $cidr = Util::find_smallest_cidr(Util::ip_range_size($startip, $endip));
+
+        $lowestCommonIP = Util::find_smallest_common_IP($startip, $endip);
+
+        return $lowestCommonIP . '/' . $cidr;
+    }
+
+    public static function find_smallest_common_IP($startip, $endip)
+    {
+        $startBits = explode('.', $startip);
+        $endBits = explode('.', $endip);
+
+        $returnIP = [];
+        $broken = false;
+        for ($i = 0; $i < 4; ++$i) {
+            if ($broken) {
+                $returnIP[$i] = "00000000";
+                continue;
+            }
+            $startAsBinary = str_pad(decbin($startBits[$i]), 8, "0", STR_PAD_LEFT);
+            $endAsBinary = str_pad(decbin($endBits[$i]), 8, "0", STR_PAD_LEFT);
+
+            if ($startAsBinary === $endAsBinary) {
+                $returnIP[$i] = $startAsBinary;
+                continue;
+            }
+
+            $returnOctet = [];
+            for ($j = 0; $j < 8; ++$j) {
+                if (!$broken && $startAsBinary[$j] == $endAsBinary[$j]) {
+                    $returnOctet[$j] = $startAsBinary[$j];
+                    continue;
+                } else {
+                    $returnOctet[$j] = "0";
+                    $broken = true;
+                }
+            }
+
+            $returnIP[$i] = implode('', $returnOctet);
+        }
+        $returnIPDec = [];
+        foreach ($returnIP as $returnIPBin) {
+            $returnIPDec[] = bindec($returnIPBin);
+        }
+        return implode('.', $returnIPDec);
+    }
+
     public static function subnet_range_size($subnetmask)
     {
         return (2 ** (32 - (int) $subnetmask));

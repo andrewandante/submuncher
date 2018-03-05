@@ -16,11 +16,10 @@ class SubMuncher
      * @param int $max max number of rules returned
      * @return array
      */
-    public static function consolidate($ipsArray, $flex = 0)
+    public static function consolidate($ipsArray, $max = null)
     {
         $consolidatedSubnets = [];
         $subnetStart = null;
-        $flexCount = 0;
 
         $ips = array_unique($ipsArray);
         $sortedIPs = Util::sort_addresses($ips);
@@ -33,25 +32,11 @@ class SubMuncher
             // last IP
             if (!isset($sortedIPs[$index + 1])) {
                 if ($subnetStart) {
-//                    var_dump(['flexcount' => $flexCount]);
-                    $lastIP = $flexCount < $flex ? Util::ip_after($ipv4, $flex) : $ipv4;
-//                    var_dump(['subnetStart' => $subnetStart, 'lastIP' => $lastIP]);
-                    $result = self::ip_range_to_subnet_array($subnetStart, $lastIP);
-
-                    $lastRule = end($result);
-                    $parts = explode('/', $lastRule);
-                    $subnetMask = $parts[1];
-                    if (Util::subnet_range_size($subnetMask) <= $flex) {
-                        array_pop($result);
-                    }
-
-//                    var_dump($consolidatedSubnets);
+                    $result = self::ip_range_to_subnet_array($subnetStart, $ipv4);
                     $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
-//                    var_dump($consolidatedSubnets);
                 } else {
                     $consolidatedSubnets[]= $ipv4.'/32';
                     $subnetStart = null;
-                    $flexCount = 0;
                 }
                 // if the next IP is sequential, we want this as part of the subnet
             } elseif ($sortedIPs[$index + 1] == Util::ip_after($ipv4)) {
@@ -59,44 +44,21 @@ class SubMuncher
                 $subnetStart = $subnetStart ?: $ipv4;
                 // if not the first IP and the previous IP is sequential, we're at the end of a subnet
             } elseif (isset($sortedIPs[$index - 1])) {
-                if ($flexCount < $flex) {
-                    ++$flexCount;
-                } else {
-                    $endIP = $flexCount < $flex ? Util::ip_after($ipv4, $flex) : $ipv4;
-                    $result = self::ip_range_to_subnet_array($subnetStart, $endIP);
-
-                    $lastRule = end($result);
-                    $parts = explode('/', $lastRule);
-                    $subnetMask = $parts[1];
-                    if (Util::subnet_range_size($subnetMask) <= $flex) {
-                        array_pop($result);
-                    }
-
+                    $result = self::ip_range_to_subnet_array($subnetStart, $ipv4);
                     $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
                     $subnetStart = null;
-                    $flexCount = 0;
-                }
                 // otherwise we are a lone /32, so add it straight in
             } else {
-                if ($flexCount < $flex) {
-                    ++$flexCount;
-                } else {
-                    $consolidatedSubnets[]= $ipv4.'/32';
-                    $subnetStart = null;
-                    $flexCount = 0;
-                }
-
+                $consolidatedSubnets[]= $ipv4.'/32';
+                $subnetStart = null;
             }
         }
 
-        $lastRule = end($consolidatedSubnets);
-        $parts = explode('/', $lastRule);
-        $subnetMask = $parts[1];
-        if (Util::subnet_range_size($subnetMask) <= $flex) {
-            array_pop($consolidatedSubnets);
+        if (!$max || count($consolidatedSubnets) <= $max) {
+            return $consolidatedSubnets;
         }
 
-        return $consolidatedSubnets;
+        return self::ultra_compression($consolidatedSubnets, $max);
     }
 
     /* Convert a range of IPs to an array of subnets which can contain the range. */
@@ -179,30 +141,86 @@ class SubMuncher
         return $rangesubnets;
     }
 
+
     /**
      * Should be an array of CIDRS eg ['1.1.1.0/24', '2.2.2.2/31']
      *
      * @param string[] $subnetsArray
      */
-    public static function consolidate_subnets($subnetsArray)
+    public static function consolidate_subnets($subnetsArray, $max = null)
     {
         $ips = [];
         foreach ($subnetsArray as $subnet) {
             $ips = array_merge($ips, Util::cidr_to_ips_array($subnet));
         }
 
-        return self::consolidate($ips);
+        return self::consolidate($ips, $max);
     }
 
-//    public static function consolidateWithFlex($ipsArray, $flex = 0)
-//    {
-//        $ips = array_unique($ipsArray);
-//        $sortedIPs = Util::sort_addresses($ips);
-//        for ($i = 0; $i < $flex; ++$i) {
-//            for ($j = 0; $j < $flex; ++$j) {
-//
-//            }
-//        }
-//
-//    }
+    public static function ultra_compression($subnetsArray, $max = null)
+    {
+        $subnetToMaskMap = [];
+        $ipReductionBySubnet = [];
+
+        foreach ($subnetsArray as $index => $cidr) {
+            $parts = explode('/', $cidr);
+            $adjacentParts = [];
+
+            if (isset($subnetsArray[$index + 1])) {
+                $adjacentParts = explode('/', $subnetsArray[$index + 1]);
+            }
+
+            $subnetToMaskMap[$parts[0]] = [
+                'mask' => $parts[1],
+                'next' => isset($adjacentParts[0]) ? $adjacentParts[0] : 'none'
+            ];
+
+            if ($index == count($subnetsArray) - 1) {
+                // we at the end
+                break;
+            }
+
+
+            $toJoin = Util::get_single_subnet($parts[0], Util::gen_subnet_max($adjacentParts[0], $adjacentParts[1]));
+            $joinAddress = explode('/', $toJoin)[0];
+            $joinMask = explode('/', $toJoin)[1];
+            $diff = abs(Util::subnet_range_size($parts[1]) - Util::subnet_range_size($joinMask));
+            $ipReductionBySubnet[$joinAddress] = [
+                'mask' => $joinMask,
+                'diff' => $diff,
+                'original' => $parts[0]
+            ];
+        }
+
+        uasort($ipReductionBySubnet, function ($a, $b) {
+            return $a['diff'] - $b['diff'];
+        });
+        reset($ipReductionBySubnet);
+        $injectedIP = key($ipReductionBySubnet);
+
+        $toUpdate = $ipReductionBySubnet[$injectedIP]['original'];
+        $next = $subnetToMaskMap[$toUpdate]['next'];
+
+        // remove the two subnets we've just mushed
+        unset($subnetToMaskMap[$toUpdate]);
+        unset($subnetToMaskMap[$next]);
+
+        $subnetToMaskMap[$injectedIP] = [
+            'mask' => $ipReductionBySubnet[$injectedIP]['mask'],
+            'next' => 'none',
+        ];
+
+        $returnIPs = [];
+        foreach ($subnetToMaskMap as $ip => $config) {
+            $returnIPs[] = $ip.'/'.$config['mask'];
+        }
+
+        sort($returnIPs);
+
+        if (!$max || count($returnIPs) <= $max) {
+            return $returnIPs;
+        }
+
+        return self::consolidate_subnets($returnIPs, $max);
+    }
 }

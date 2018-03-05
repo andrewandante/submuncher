@@ -103,4 +103,10 @@ class UtilTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertEquals(['10.10.10.0'], Util::cidr_to_ips_array('10.10.10.0'));
     }
+
+    public function testGetSingleSubnet()
+    {
+        $this->assertEquals('10.10.10.0/30', Util::get_single_subnet('10.10.10.0', '10.10.10.3'));
+        $this->assertEquals('0.0.0.0/1', Util::get_single_subnet('10.10.10.0', '100.100.100.30'));
+    }
 }

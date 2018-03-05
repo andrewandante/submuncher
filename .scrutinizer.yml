@@ -4,16 +4,15 @@ tools:
 
 build:
   environment:
-    php: 7.1
+    php: 5.6
   dependencies:
     # Overwrites inferred commands
     override:
       - "composer install --no-interaction --ignore-platform-reqs --no-progress"
   tests:
     before:
-      - "vendor/bin/phpcs src/"
-      - "vendor/bin/phpcs tests/"
       - "vendor/bin/phpunit"
-
+    override:
+      - phpcs-run --standard=phpcs.xml src/ tests/
 checks:
   php: true
