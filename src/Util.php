@@ -109,7 +109,7 @@ class Util
         $cidr = self::find_smallest_cidr(self::ip_range_size($startip, $endip));
         $lowestCommonIP = self::find_smallest_common_IP($startip, $endip);
 
-        while (!self::ip_less_than($endip, self::gen_subnet_max($lowestCommonIP, $cidr))) {
+        while (self::ip_greater_than($endip, self::gen_subnet_max($lowestCommonIP, $cidr))) {
             $cidr--;
             if ($cidr == 0) {
                 return [];
