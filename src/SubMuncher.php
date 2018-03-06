@@ -61,7 +61,12 @@ class SubMuncher
         return self::ultra_compression($consolidatedSubnets, $max);
     }
 
-    /* Convert a range of IPs to an array of subnets which can contain the range. */
+    /**
+     * @param string $startip an IPv4 address
+     * @param string $endip an IPv4 address
+     *
+     * @return string[] list of subnets that cover the ip range specified
+     */
     public static function ip_range_to_subnet_array($startip, $endip)
     {
 
@@ -146,6 +151,7 @@ class SubMuncher
      * Should be an array of CIDRS eg ['1.1.1.0/24', '2.2.2.2/31']
      *
      * @param string[] $subnetsArray
+     * @param int $max
      */
     public static function consolidate_subnets($subnetsArray, $max = null)
     {
@@ -157,6 +163,17 @@ class SubMuncher
         return self::consolidate($ips, $max);
     }
 
+    /**
+     * Function to figure out the least problematic subnets to combine based on
+     * fewest additional IPs introduced. Then combines them as such, and runs
+     * it back through the consolidator with one less subnet - until we have
+     * reduced it down to the maximum number of rules
+     *
+     * @param array $subnetsArray array of cidrs
+     * @param int $max
+     *
+     * @return array
+     */
     public static function ultra_compression($subnetsArray, $max = null)
     {
         $subnetToMaskMap = [];
@@ -180,7 +197,6 @@ class SubMuncher
                 break;
             }
 
-
             $toJoin = Util::get_single_subnet($parts[0], Util::gen_subnet_max($adjacentParts[0], $adjacentParts[1]));
             $joinAddress = explode('/', $toJoin)[0];
             $joinMask = explode('/', $toJoin)[1];
@@ -192,9 +208,11 @@ class SubMuncher
             ];
         }
 
+        // sort array by number of additional IPs introduced
         uasort($ipReductionBySubnet, function ($a, $b) {
             return $a['diff'] - $b['diff'];
         });
+
         reset($ipReductionBySubnet);
         $injectedIP = key($ipReductionBySubnet);
 
@@ -205,6 +223,7 @@ class SubMuncher
         unset($subnetToMaskMap[$toUpdate]);
         unset($subnetToMaskMap[$next]);
 
+        // chuck in the new one
         $subnetToMaskMap[$injectedIP] = [
             'mask' => $ipReductionBySubnet[$injectedIP]['mask'],
             'next' => 'none',
@@ -221,6 +240,7 @@ class SubMuncher
             return $returnIPs;
         }
 
+        // loop it through again to keep going until we have reached the desired number of rules
         return self::consolidate_subnets($returnIPs, $max);
     }
 }
