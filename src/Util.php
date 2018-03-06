@@ -102,14 +102,19 @@ class Util
 
     public static function get_single_subnet($startip, $endip)
     {
-        if (!Util::is_ipaddr($startip) || !Util::is_ipaddr($endip)) {
-            return array();
+        if (!self::is_ipaddr($startip) || !self::is_ipaddr($endip)) {
+            return [];
         }
 
-        $cidr = Util::find_smallest_cidr(Util::ip_range_size($startip, $endip));
+        $cidr = self::find_smallest_cidr(self::ip_range_size($startip, $endip));
+        $lowestCommonIP = self::find_smallest_common_IP($startip, $endip);
 
-        $lowestCommonIP = Util::find_smallest_common_IP($startip, $endip);
-
+        while (!self::ip_less_than($endip, self::gen_subnet_max($lowestCommonIP, $cidr))) {
+            $cidr--;
+            if ($cidr == 0) {
+                return [];
+            }
+        }
         return $lowestCommonIP . '/' . $cidr;
     }
 
