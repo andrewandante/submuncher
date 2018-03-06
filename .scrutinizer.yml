@@ -1,0 +1,18 @@
+tools:
+  php_sim:
+    min_mass: 30 # Defaults to 16
+
+build:
+  environment:
+    php: 5.6
+  dependencies:
+    # Overwrites inferred commands
+    override:
+      - "composer install --no-interaction --ignore-platform-reqs --no-progress"
+  tests:
+    before:
+      - "vendor/bin/phpunit"
+    override:
+      - phpcs-run --standard=phpcs.xml src/ tests/
+checks:
+  php: true

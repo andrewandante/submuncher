@@ -1,6 +1,7 @@
 <?php
 
 namespace AndrewAndante\SubMuncher;
+
 /**
  * These helpful functions were lifted from the Symfony library
  * https://github.com/symfony/http-foundation/blob/master/LICENSE
@@ -25,11 +26,9 @@ class Validator
      * @param string|array $ips       List of IPs or subnets (can be a string if only a single one)
      *
      * @return bool Whether the IP is valid
-     *
-     * @package framework
-     * @subpackage core
      */
-    public static function checkIP($requestIP, $ips) {
+    public static function checkIP($requestIP, $ips)
+    {
         if (!is_array($ips)) {
             $ips = array($ips);
         }
@@ -54,7 +53,8 @@ class Validator
      *
      * @return bool Whether the request IP matches the IP, or whether the request IP is within the CIDR subnet
      */
-    public static function checkIP4($requestIP, $ip) {
+    public static function checkIP4($requestIP, $ip)
+    {
         if (!filter_var($requestIP, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             return false;
         }
@@ -92,7 +92,8 @@ class Validator
      *
      * @throws \RuntimeException When IPV6 support is not enabled
      */
-    public static function checkIP6($requestIP, $ip) {
+    public static function checkIP6($requestIP, $ip)
+    {
         if (!((extension_loaded('sockets') && defined('AF_INET6')) || @inet_pton('::1'))) {
             throw new \RuntimeException('Unable to check IPv6. Check that PHP was not compiled with option "disable-ipv6".');
         }
@@ -128,8 +129,8 @@ class Validator
     }
 
     /**
-     * @param array $requestIPs IP addresses as an array
-     * @param string $ips IP address or CIDR notation
+     * @param array  $requestIPs IP addresses as an array
+     * @param string $ips        IP address or CIDR notation
      *
      * @return array The IPs in $requestIPs that are not covered by the CIDR ranges in $ips
      */

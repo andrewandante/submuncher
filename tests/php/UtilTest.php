@@ -38,13 +38,17 @@ class UtilTest extends \PHPUnit_Framework_TestCase
     public function testIPAfter()
     {
         $this->assertEquals('10.10.10.1', Util::ip_after('10.10.10.0'));
+        $this->assertEquals('10.10.10.2', Util::ip_after('10.10.10.0', 2));
         $this->assertEquals('10.10.11.0', Util::ip_after('10.10.10.255'));
+        $this->assertEquals('10.10.11.1', Util::ip_after('10.10.10.255', 2));
     }
 
     public function testIPBefore()
     {
         $this->assertEquals('10.10.10.0', Util::ip_before('10.10.10.1'));
+        $this->assertEquals('10.10.10.0', Util::ip_before('10.10.10.2', 2));
         $this->assertEquals('10.10.9.255', Util::ip_before('10.10.10.0'));
+        $this->assertEquals('10.10.9.255', Util::ip_before('10.10.10.1', 2));
     }
 
     public function testFindSmallestCidr()
@@ -98,5 +102,11 @@ class UtilTest extends \PHPUnit_Framework_TestCase
             Util::cidr_to_ips_array('10.10.10.0/30')
         );
         $this->assertEquals(['10.10.10.0'], Util::cidr_to_ips_array('10.10.10.0'));
+    }
+
+    public function testGetSingleSubnet()
+    {
+        $this->assertEquals('10.10.10.0/30', Util::get_single_subnet('10.10.10.0', '10.10.10.3'));
+        $this->assertEquals('0.0.0.0/1', Util::get_single_subnet('10.10.10.0', '100.100.100.30'));
     }
 }
