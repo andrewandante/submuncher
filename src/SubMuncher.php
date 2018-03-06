@@ -43,7 +43,7 @@ class SubMuncher
                 // if we've already started, just keep going, else kick one off
                 $subnetStart = $subnetStart ?: $ipv4;
                 // if not the first IP and the previous IP is sequential, we're at the end of a subnet
-            } elseif (isset($sortedIPs[$index - 1])) {
+            } elseif (isset($sortedIPs[$index - 1]) && $ipv4 == Util::ip_after($sortedIPs[$index - 1])) {
                     $result = self::ip_range_to_subnet_array($subnetStart, $ipv4);
                     $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
                     $subnetStart = null;
