@@ -103,7 +103,7 @@ class Util
     public static function get_single_subnet($startip, $endip)
     {
         if (!self::is_ipaddr($startip) || !self::is_ipaddr($endip)) {
-            return [];
+            return null;
         }
 
         $cidr = self::find_smallest_cidr(self::ip_range_size($startip, $endip));
@@ -112,7 +112,7 @@ class Util
         while (self::ip_greater_than($endip, self::gen_subnet_max($lowestCommonIP, $cidr))) {
             $cidr--;
             if ($cidr == 0) {
-                return [];
+                return null;
             }
         }
         return $lowestCommonIP . '/' . $cidr;

@@ -198,6 +198,9 @@ class SubMuncher
             }
 
             $toJoin = Util::get_single_subnet($parts[0], Util::gen_subnet_max($adjacentParts[0], $adjacentParts[1]));
+            if (!$toJoin) {
+                continue;
+            }
             $joinAddress = explode('/', $toJoin)[0];
             $joinMask = explode('/', $toJoin)[1];
             $diff = abs(Util::subnet_range_size($parts[1]) - Util::subnet_range_size($joinMask));
