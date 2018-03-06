@@ -54,7 +54,7 @@ class SubMuncher
             }
         }
 
-        if (!$max || count($consolidatedSubnets) <= $max) {
+        if ($max === null || count($consolidatedSubnets) <= $max) {
             return $consolidatedSubnets;
         }
 
@@ -236,7 +236,7 @@ class SubMuncher
 
         sort($returnIPs);
 
-        if (!$max || count($returnIPs) <= $max) {
+        if ($max === null || count($returnIPs) <= $max) {
             return $returnIPs;
         }
 
