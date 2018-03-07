@@ -16,7 +16,7 @@ class SubMuncher
      * @param int $max max number of rules returned
      * @return array
      */
-    public static function consolidate($ipsArray, $max = null)
+    public static function consolidate($ipsArray, $max = null, $alreadyProcessed = null)
     {
         $consolidatedSubnets = [];
         $subnetStart = null;
@@ -25,6 +25,7 @@ class SubMuncher
         $sortedIPs = Util::sort_addresses($ips);
 
         foreach ($sortedIPs as $index => $ipv4) {
+            // If not last and the next IP is the next sequential one, we are at the beginning of a subnet
             if (isset($sortedIPs[$index + 1]) && $sortedIPs[$index + 1] == Util::ip_after($ipv4)) {
                 // if we've already started, just keep going, else kick one off
                 $subnetStart = $subnetStart ?: $ipv4;
@@ -40,11 +41,17 @@ class SubMuncher
             }
         }
 
-        if ($max === null || count($consolidatedSubnets) <= $max) {
-            return $consolidatedSubnets;
+        if ($alreadyProcessed !== null) {
+            $totalSubnets = array_merge($consolidatedSubnets, $alreadyProcessed);
+        } else {
+            $totalSubnets = $consolidatedSubnets;
         }
 
-        return self::ultra_compression($consolidatedSubnets, $max);
+        if ($max === null || count($totalSubnets) <= $max) {
+            return $totalSubnets;
+        }
+
+        return self::ultra_compression($consolidatedSubnets, $max, $alreadyProcessed);
     }
 
     /**
@@ -126,21 +133,20 @@ class SubMuncher
         return $rangesubnets;
     }
 
-
     /**
      * Should be an array of CIDRS eg ['1.1.1.0/24', '2.2.2.2/31']
      *
      * @param string[] $subnetsArray
      * @param int $max
      */
-    public static function consolidate_subnets($subnetsArray, $max = null)
+    public static function consolidate_subnets($subnetsArray, $max = null, $alreadyProcessed = null)
     {
         $ips = [];
         foreach ($subnetsArray as $subnet) {
             $ips = array_merge($ips, Util::cidr_to_ips_array($subnet));
         }
 
-        return self::consolidate($ips, $max);
+        return self::consolidate($ips, $max, $alreadyProcessed);
     }
 
     /**
@@ -154,7 +160,7 @@ class SubMuncher
      *
      * @return array
      */
-    public static function ultra_compression($subnetsArray, $max = null)
+    public static function ultra_compression($subnetsArray, $max = null, $alreadyProcessed = null)
     {
         $subnetToMaskMap = [];
         $ipReductionBySubnet = [];
@@ -207,23 +213,62 @@ class SubMuncher
         unset($subnetToMaskMap[$next]);
 
         // chuck in the new one
-        $subnetToMaskMap[$injectedIP] = [
-            'mask' => $ipReductionBySubnet[$injectedIP]['mask'],
-            'next' => 'none',
-        ];
+        $alreadyProcessed[] = $injectedIP . '/' . $ipReductionBySubnet[$injectedIP]['mask'];
 
         $returnCIDRs = [];
         foreach ($subnetToMaskMap as $ip => $config) {
             $returnCIDRs[] = $ip.'/'.$config['mask'];
         }
 
-        sort($returnCIDRs);
 
-        if ($max === null || count($returnCIDRs) <= $max) {
-            return $returnCIDRs;
+        if ($alreadyProcessed !== null) {
+            $totalSubnets = array_merge($returnCIDRs, $alreadyProcessed);
+        } else {
+            $totalSubnets = $returnCIDRs;
+        }
+
+        sort($totalSubnets);
+
+        if ($max === null || count($totalSubnets) <= $max) {
+            return $totalSubnets;
         }
 
         // loop it through again to keep going until we have reached the desired number of rules
-        return self::consolidate_subnets($returnCIDRs, $max);
+        return self::consolidate_subnets($returnCIDRs, $max, $alreadyProcessed);
+    }
+
+    /**
+     * @param string[] $ipsArray
+     * @param int|null $max
+     * @return array
+     */
+    public static function consolidate_verbose($ipsArray, $max = null, $alreadyProcessed = null)
+    {
+        $consolidateResults = self::consolidate($ipsArray, $max, $alreadyProcessed);
+        $totalIPs = [];
+        foreach ($consolidateResults as $cidr) {
+            $totalIPs = array_merge($totalIPs, Util::cidr_to_ips_array($cidr));
+        }
+
+        return [
+            'consolidated_subnets' => $consolidateResults,
+            'initial_IPs' => Util::sort_addresses($ipsArray),
+            'total_IPs' => $totalIPs
+        ];
+    }
+
+    /**
+     * @param string[] $subnetsArray
+     * @param int|null $max
+     * @return array
+     */
+    public static function consolidate_subnets_verbose($subnetsArray, $max = null, $alreadyProcessed = null)
+    {
+        $ips = [];
+        foreach ($subnetsArray as $subnet) {
+            $ips = array_merge($ips, Util::cidr_to_ips_array($subnet));
+        }
+
+        return self::consolidate_verbose($ips, $max, $alreadyProcessed);
     }
 }
