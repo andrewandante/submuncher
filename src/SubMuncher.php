@@ -25,28 +25,14 @@ class SubMuncher
         $sortedIPs = Util::sort_addresses($ips);
 
         foreach ($sortedIPs as $index => $ipv4) {
-            // first IP
-            if ($index == 0) {
-                $subnetStart = $ipv4;
-            }
-            // last IP
-            if (!isset($sortedIPs[$index + 1])) {
-                if ($subnetStart) {
-                    $result = self::ip_range_to_subnet_array($subnetStart, $ipv4);
-                    $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
-                } else {
-                    $consolidatedSubnets[]= $ipv4.'/32';
-                    $subnetStart = null;
-                }
-                // if the next IP is sequential, we want this as part of the subnet
-            } elseif ($sortedIPs[$index + 1] == Util::ip_after($ipv4)) {
+            if (isset($sortedIPs[$index + 1]) && $sortedIPs[$index + 1] == Util::ip_after($ipv4)) {
                 // if we've already started, just keep going, else kick one off
                 $subnetStart = $subnetStart ?: $ipv4;
                 // if not the first IP and the previous IP is sequential, we're at the end of a subnet
-            } elseif (isset($sortedIPs[$index - 1]) && $ipv4 == Util::ip_after($sortedIPs[$index - 1])) {
-                    $result = self::ip_range_to_subnet_array($subnetStart, $ipv4);
-                    $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
-                    $subnetStart = null;
+            } elseif (isset($sortedIPs[$index - 1]) && $subnetStart !== null) {
+                $result = self::ip_range_to_subnet_array($subnetStart, $ipv4);
+                $consolidatedSubnets = array_merge($consolidatedSubnets, $result);
+                $subnetStart = null;
                 // otherwise we are a lone /32, so add it straight in
             } else {
                 $consolidatedSubnets[]= $ipv4.'/32';
@@ -71,11 +57,11 @@ class SubMuncher
     {
 
         if (!Util::is_ipaddr($startip) || !Util::is_ipaddr($endip)) {
-            return array();
+            return [];
         }
 
         // Container for subnets within this range.
-        $rangesubnets = array();
+        $rangesubnets = [];
 
         // Figure out what the smallest subnet is that holds the number of IPs in the
         // given range.
@@ -91,7 +77,7 @@ class SubMuncher
             // Check best case where the range is exactly one subnet.
             if (($targetsub_min == $startip) && ($targetsub_max == $endip)) {
                 // Hooray, the range is exactly this subnet!
-                return array("{$startip}/{$cidr}");
+                return ["{$startip}/{$cidr}"];
             }
 
             // These remaining scenarios will find a subnet that uses the largest
@@ -99,23 +85,17 @@ class SubMuncher
             // tested recursively after the loop.
 
             // Check if the subnet begins with $startip and ends before $endip
-            if (($targetsub_min == $startip)
-                && Util::ip_less_than($targetsub_max, $endip)
-            ) {
+            if (($targetsub_min == $startip) && Util::ip_less_than($targetsub_max, $endip)) {
                 break;
             }
 
             // Check if the subnet ends at $endip and starts after $startip
-            if (Util::ip_greater_than($targetsub_min, $startip)
-                && ($targetsub_max == $endip)
-            ) {
+            if (Util::ip_greater_than($targetsub_min, $startip) && ($targetsub_max == $endip)) {
                 break;
             }
 
             // Check if the subnet is between $startip and $endip
-            if (Util::ip_greater_than($targetsub_min, $startip)
-                && Util::ip_less_than($targetsub_max, $endip)
-            ) {
+            if (Util::ip_greater_than($targetsub_min, $startip) && Util::ip_less_than($targetsub_max, $endip)) {
                 break;
             }
         }
@@ -193,7 +173,7 @@ class SubMuncher
             ];
 
             if ($index == count($subnetsArray) - 1) {
-                // we at the end
+                // we are at the end
                 break;
             }
 
@@ -232,18 +212,18 @@ class SubMuncher
             'next' => 'none',
         ];
 
-        $returnIPs = [];
+        $returnCIDRs = [];
         foreach ($subnetToMaskMap as $ip => $config) {
-            $returnIPs[] = $ip.'/'.$config['mask'];
+            $returnCIDRs[] = $ip.'/'.$config['mask'];
         }
 
-        sort($returnIPs);
+        sort($returnCIDRs);
 
-        if ($max === null || count($returnIPs) <= $max) {
-            return $returnIPs;
+        if ($max === null || count($returnCIDRs) <= $max) {
+            return $returnCIDRs;
         }
 
         // loop it through again to keep going until we have reached the desired number of rules
-        return self::consolidate_subnets($returnIPs, $max);
+        return self::consolidate_subnets($returnCIDRs, $max);
     }
 }
