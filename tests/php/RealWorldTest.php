@@ -3,6 +3,7 @@
 namespace AndrewAndante\SubMuncher\Test;
 
 use AndrewAndante\SubMuncher\SubMuncher;
+use AndrewAndante\SubMuncher\Util;
 
 class RealWorldTest extends \PHPUnit_Framework_TestCase
 {
@@ -34,15 +35,27 @@ class RealWorldTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testConsolidateSubnetsVerboseWithMaxRules()
+    public function testConsolidateSubnetsPerformance()
     {
-        $result = SubMuncher::consolidate_subnets_verbose($this->json_data['subnets'], 25);
-        $this->assertCount(25, $result['consolidated_subnets']);
-        $this->assertEquals($this->json_data['raw_ips'], $result['initial_IPs']);
-        $this->assertGreaterThanOrEqual(count($this->json_data['raw_ips']), count($result['total_IPs']));
+        $result = SubMuncher::consolidate_subnets($this->json_data['subnets'], 1);
+        $this->assertLessThanOrEqual(1, count($result));
+    }
 
-        foreach ($this->json_data['raw_ips'] as $raw_ip) {
-            $this->assertContains($raw_ip, $result['total_IPs']);
+    public function testConsolidateSubnetsWithMaxRules()
+    {
+        $result = SubMuncher::consolidate_subnets($this->json_data['subnets'], 25);
+        $fail = true;
+        foreach ($this->json_data['raw_ips'] as $ip) {
+            foreach ($result as $subnet) {
+                if (Util::cidr_contains($subnet, $ip)) {
+                    $fail = false;
+                    break;
+                }
+            }
+        }
+
+        if ($fail) {
+            $this->fail($ip . " not contained in any subnets returned");
         }
     }
 }
