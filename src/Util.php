@@ -74,6 +74,18 @@ class Util
         return self::long2ip32(ip2long($ip) - $decrement);
     }
 
+    public static function ip_diff($ip1, $ip2)
+    {
+        return abs(self::ip2ulong($ip1) - self::ip2ulong($ip2));
+    }
+
+    public static function cidr_contains($cidr, $ip)
+    {
+        list($start, $mask) = explode('/', $cidr);
+        $cidrMax = self::gen_subnet_max($start, $mask);
+        return !self::ip_greater_than($ip, $cidrMax) && !self::ip_less_than($ip, $start);
+    }
+
     /* Find the smallest possible subnet mask which can contain a given number of IPs
     *  e.g. 512 IPs can fit in a /23, but 513 IPs need a /22
     */
@@ -227,5 +239,23 @@ class Util
             $ipAddresses[] = self::long2ip32($raw);
         }
         return $ipAddresses;
+    }
+
+    /* takes an array of ip address, sorts and returns as an array */
+    public static function sort_cidrs($cidrs)
+    {
+        $map = [];
+        $bitAddresses = [];
+        $sortedCidrs = [];
+        foreach ($cidrs as $cidr) {
+            $parts = explode('/', $cidr);
+            $map[$parts[0]] = $parts[1];
+            $bitAddresses[] = self::ip2ulong($parts[0]);
+        }
+        sort($bitAddresses);
+        foreach ($bitAddresses as $raw) {
+            $sortedCidrs[] = self::long2ip32($raw) . '/' . $map[self::long2ip32($raw)];
+        }
+        return $sortedCidrs;
     }
 }
