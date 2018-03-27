@@ -25,9 +25,8 @@ For example, to reduce your list of subnets down to 25 total rules, try `AndrewA
 
 There are verbose methods which will give you the initial list of IPs covered by your CIDRs, and the ultimate list covered. That will give you the opportunity to compare, so you can see what additional IPs have been introduced. This is in case you are using them for a whitelist or something that requires exact knowledge of the IPs.
 
-<p style="color: red;">
+### Warning
 This is significantly slower when calculating subnets, as it expands out all the individual IPs in the subnet, rather than just using the first and last IP
-</p>
 
 ## Limitations
 
