@@ -117,6 +117,28 @@ class SubMuncherTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testConsolidateSubnetsWithDuplicates()
+    {
+        $this->assertEquals(['10.10.10.0/31'], SubMuncher::consolidate_subnets(
+            ['10.10.10.0/32', '10.10.10.1/32', '10.10.10.1/32']));
+        $this->assertEquals(
+            ['10.10.10.0/31', '10.10.10.2/32', '100.10.10.0/30', '100.10.10.4/31'],
+            SubMuncher::consolidate_subnets(
+                [
+                    '10.10.10.0/32',
+                    '10.10.10.0/32',
+                    '10.10.10.1/32',
+                    '10.10.10.2/32',
+                    '100.10.10.0/32',
+                    '100.10.10.1/32',
+                    '100.10.10.2/32',
+                    '100.10.10.3/32',
+                    '100.10.10.4/31',
+                ]
+            )
+        );
+    }
+
     public function testConsolidateSubnetsWithMaxRules()
     {
         $this->assertEquals(

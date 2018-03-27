@@ -141,7 +141,7 @@ class SubMuncher
     public static function consolidate_subnets($subnetsArray, $max = null)
     {
 
-        $subnetsArray = Util::sort_cidrs($subnetsArray);
+        $subnetsArray = Util::sort_cidrs(array_unique($subnetsArray));
 
         do {
             $countSubnetsArray = count($subnetsArray);
