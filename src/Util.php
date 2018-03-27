@@ -229,6 +229,7 @@ class Util
     /* takes an array of ip address, sorts and returns as an array */
     public static function sort_addresses($ipaddr)
     {
+        $ipaddr = array_unique($ipaddr);
         $bitAddresses = [];
         $ipAddresses = [];
         foreach ($ipaddr as $ipv4) {
