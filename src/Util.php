@@ -233,7 +233,9 @@ class Util
         $bitAddresses = [];
         $ipAddresses = [];
         foreach ($ipaddr as $ipv4) {
-            $bitAddresses[] = self::ip2ulong($ipv4);
+            if (self::is_ipaddr($ipv4)) {
+                $bitAddresses[] = self::ip2ulong($ipv4);
+            }
         }
         sort($bitAddresses);
         foreach ($bitAddresses as $raw) {
@@ -250,8 +252,10 @@ class Util
         $sortedCidrs = [];
         foreach ($cidrs as $cidr) {
             $parts = explode('/', $cidr);
-            $map[$parts[0]] = $parts[1];
-            $bitAddresses[] = self::ip2ulong($parts[0]);
+            if (self::is_ipaddr($parts[0])) {
+                $map[$parts[0]] = $parts[1];
+                $bitAddresses[] = self::ip2ulong($parts[0]);
+            }
         }
         sort($bitAddresses);
         foreach ($bitAddresses as $raw) {

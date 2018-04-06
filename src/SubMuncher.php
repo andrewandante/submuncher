@@ -25,6 +25,9 @@ class SubMuncher
         $sortedIPs = Util::sort_addresses($ips);
 
         foreach ($sortedIPs as $index => $ipv4) {
+            if (!Util::is_ipaddr($ipv4)) {
+                continue;
+            }
             // If not last and the next IP is the next sequential one, we are at the beginning of a subnet
             if (isset($sortedIPs[$index + 1]) && $sortedIPs[$index + 1] == Util::ip_after($ipv4)) {
                 // if we've already started, just keep going, else kick one off
