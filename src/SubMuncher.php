@@ -12,7 +12,7 @@ class SubMuncher
     }
 
     /**
-     * @param array $ipsArray
+     * @param string[] $ipsArray
      * @param int $max max number of rules returned
      * @return array
      */
@@ -25,6 +25,9 @@ class SubMuncher
         $sortedIPs = Util::sort_addresses($ips);
 
         foreach ($sortedIPs as $index => $ipv4) {
+            if (!Util::is_ipv4_addr($ipv4)) {
+                continue;
+            }
             // If not last and the next IP is the next sequential one, we are at the beginning of a subnet
             if (isset($sortedIPs[$index + 1]) && $sortedIPs[$index + 1] == Util::ip_after($ipv4)) {
                 // if we've already started, just keep going, else kick one off
@@ -57,7 +60,7 @@ class SubMuncher
     public static function ip_range_to_subnet_array($startip, $endip)
     {
 
-        if (!Util::is_ipaddr($startip) || !Util::is_ipaddr($endip)) {
+        if (!Util::is_ipv4_addr($startip) || !Util::is_ipv4_addr($endip)) {
             return [];
         }
 

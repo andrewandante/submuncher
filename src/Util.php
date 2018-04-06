@@ -34,7 +34,7 @@ class Util
     }
 
     /* returns true if $ipaddr is a valid dotted IPv4 address */
-    public static function is_ipaddr($ipaddr)
+    public static function is_ipv4_addr($ipaddr)
     {
         if (!is_string($ipaddr)) {
             return false;
@@ -103,7 +103,7 @@ class Util
     */
     public static function ip_range_size($startip, $endip)
     {
-        if (self::is_ipaddr($startip) && self::is_ipaddr($endip)) {
+        if (self::is_ipv4_addr($startip) && self::is_ipv4_addr($endip)) {
             // Operate as unsigned long because otherwise it wouldn't work
             // when crossing over from 127.255.255.255 / 128.0.0.0 barrier
             return abs(self::ip2ulong($startip) - self::ip2ulong($endip)) + 1;
@@ -114,7 +114,7 @@ class Util
 
     public static function get_single_subnet($startip, $endip)
     {
-        if (!self::is_ipaddr($startip) || !self::is_ipaddr($endip)) {
+        if (!self::is_ipv4_addr($startip) || !self::is_ipv4_addr($endip)) {
             return null;
         }
 
@@ -178,7 +178,7 @@ class Util
     public static function cidr_to_ips_array($cidr)
     {
         $parts = explode('/', $cidr);
-        if (!self::is_ipaddr($parts[0])) {
+        if (!self::is_ipv4_addr($parts[0])) {
             return false;
         }
 
@@ -197,7 +197,7 @@ class Util
     /* return the subnet address given a host address and a subnet bit count */
     public static function gen_subnet($ipaddr, $bits)
     {
-        if (!self::is_ipaddr($ipaddr) || !is_numeric($bits)) {
+        if (!self::is_ipv4_addr($ipaddr) || !is_numeric($bits)) {
             return "";
         }
 
@@ -219,7 +219,7 @@ class Util
     a subnet bit count */
     public static function gen_subnet_max($ipaddr, $bits)
     {
-        if (!self::is_ipaddr($ipaddr) || !is_numeric($bits)) {
+        if (!self::is_ipv4_addr($ipaddr) || !is_numeric($bits)) {
             return "";
         }
 
@@ -233,7 +233,9 @@ class Util
         $bitAddresses = [];
         $ipAddresses = [];
         foreach ($ipaddr as $ipv4) {
-            $bitAddresses[] = self::ip2ulong($ipv4);
+            if (self::is_ipv4_addr($ipv4)) {
+                $bitAddresses[] = self::ip2ulong($ipv4);
+            }
         }
         sort($bitAddresses);
         foreach ($bitAddresses as $raw) {
@@ -250,8 +252,10 @@ class Util
         $sortedCidrs = [];
         foreach ($cidrs as $cidr) {
             $parts = explode('/', $cidr);
-            $map[$parts[0]] = $parts[1];
-            $bitAddresses[] = self::ip2ulong($parts[0]);
+            if (self::is_ipv4_addr($parts[0])) {
+                $map[$parts[0]] = $parts[1];
+                $bitAddresses[] = self::ip2ulong($parts[0]);
+            }
         }
         sort($bitAddresses);
         foreach ($bitAddresses as $raw) {

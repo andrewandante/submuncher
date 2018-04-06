@@ -8,15 +8,22 @@ class UtilTest extends \PHPUnit_Framework_TestCase
 {
     public function testIsIPAddress()
     {
-        $this->assertTrue(Util::is_ipaddr('10.10.10.10'));
-        $this->assertTrue(Util::is_ipaddr('255.255.255.255'));
-        $this->assertTrue(Util::is_ipaddr('0.0.0.0'));
+        $this->assertTrue(Util::is_ipv4_addr('10.10.10.10'));
+        $this->assertTrue(Util::is_ipv4_addr('255.255.255.255'));
+        $this->assertTrue(Util::is_ipv4_addr('0.0.0.0'));
 
-        $this->assertFalse(Util::is_ipaddr(10));
-        $this->assertFalse(Util::is_ipaddr('10.100.1000.100000'));
-        $this->assertFalse(Util::is_ipaddr('10.10.10'));
-        $this->assertFalse(Util::is_ipaddr('IP ADDRESS'));
-        $this->assertFalse(Util::is_ipaddr(['10.10.10.10']));
+        $this->assertFalse(Util::is_ipv4_addr(10));
+        $this->assertFalse(Util::is_ipv4_addr('10.100.1000.100000'));
+        $this->assertFalse(Util::is_ipv4_addr('10.10.10'));
+        $this->assertFalse(Util::is_ipv4_addr('IP ADDRESS'));
+        $this->assertFalse(Util::is_ipv4_addr(['10.10.10.10']));
+
+        /**
+         * IPv6 should return false for now
+         * @TODO update this when we add IPv6 functionality
+         */
+        $this->assertFalse(Util::is_ipv4_addr('::10'));
+        $this->assertFalse(Util::is_ipv4_addr('2001:0db8:85a3:0000:0000:8a2e:0370:7334'));
     }
 
     public function testIPLessThan()

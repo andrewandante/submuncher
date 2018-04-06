@@ -15,7 +15,7 @@ The most basic usage is to pass an array of IPv4 addresses into `AndrewAndante\S
 
 The most useful usage is to pass an array of CIDRs into `AndrewAndante\SubMuncher\SubMuncher::consolidate_subnets()`
 
-There are also a bunch of helper IP utility functions in the `Util` classe should you need to do some tweaking.
+There are also a bunch of helper IP utility functions in the `Util` class should you need to do some tweaking.
 
 You can also pass a second parameter that limits the number of rules returned. This invokes some magic to combine some subnets in a way that introduces the least number of additional IP addresses into the range as possible.
 
