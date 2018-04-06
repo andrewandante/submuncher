@@ -12,7 +12,7 @@ class SubMuncher
     }
 
     /**
-     * @param array $ipsArray
+     * @param string[] $ipsArray
      * @param int $max max number of rules returned
      * @return array
      */
